@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Журнал репетиций</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders:wght@700;800&family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#1b1a18;
+    --surface:#242220;
+    --surface-2:#2b2925;
+    --border:#3a3732;
+    --text:#ece5d6;
+    --text-muted:#928a7c;
+    --amber:#e8a33d;
+    --amber-dim:#7a5c2a;
+    --red:#c75450;
+    --red-dim:#5e3433;
+    --green:#7fae6b;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:
+      repeating-linear-gradient(135deg, rgba(255,255,255,0.012) 0px, rgba(255,255,255,0.012) 1px, transparent 1px, transparent 12px),
+      var(--bg);
+    color:var(--text);
+    font-family:'IBM Plex Sans', sans-serif;
+    padding:28px 18px 60px;
+  }
+  .wrap{max-width:920px; margin:0 auto;}
+
+  header{
+    display:flex; justify-content:space-between; align-items:flex-end;
+    border-bottom:2px solid var(--border);
+    padding-bottom:14px; margin-bottom:22px; flex-wrap:wrap; gap:10px;
+  }
+  h1{
+    font-family:'Big Shoulders', sans-serif;
+    font-weight:800;
+    font-size:2.1rem;
+    letter-spacing:0.03em;
+    text-transform:uppercase;
+    color:var(--amber);
+    margin:0;
+    line-height:1;
+  }
+  .subtitle{color:var(--text-muted); font-size:0.85rem; margin-top:4px;}
+  .stat-stub{
+    text-align:right;
+    font-family:'IBM Plex Mono', monospace;
+  }
+  .stat-stub .total{font-size:1.5rem; font-weight:600; color:var(--text);}
+  .stat-stub .label{font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.08em;}
+
+  .cards{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(150px, 1fr));
+    gap:10px;
+    margin-bottom:28px;
+  }
+  .card{
+    background:var(--surface);
+    border-left:4px solid var(--border);
+    border-radius:4px;
+    padding:12px 14px;
+  }
+  .card.pos{border-left-color:var(--amber);}
+  .card.neg{border-left-color:var(--red);}
+  .card .name{
+    font-family:'Big Shoulders', sans-serif;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:0.04em;
+    font-size:1rem;
+    color:var(--text);
+  }
+  .card .balance{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:1.5rem;
+    font-weight:600;
+    margin:4px 0 2px;
+  }
+  .card.pos .balance{color:var(--amber);}
+  .card.neg .balance{color:var(--red);}
+  .card.zero .balance{color:var(--text-muted);}
+  .card .status{font-size:0.68rem; text-transform:uppercase; letter-spacing:0.06em; color:var(--text-muted);}
+  .card .detail{font-family:'IBM Plex Mono', monospace; font-size:0.7rem; color:var(--text-muted); margin-top:6px;}
+
+  .section-title{
+    font-family:'Big Shoulders', sans-serif;
+    text-transform:uppercase;
+    letter-spacing:0.04em;
+    font-weight:700;
+    font-size:1.1rem;
+    color:var(--text);
+    margin:0 0 10px;
+    border-bottom:1px solid var(--border);
+    padding-bottom:6px;
+  }
+
+  button{
+    font-family:'IBM Plex Sans', sans-serif;
+    cursor:pointer;
+    border:1px solid var(--border);
+    background:var(--surface-2);
+    color:var(--text);
+    border-radius:4px;
+    padding:8px 14px;
+    font-size:0.85rem;
+  }
+  button:hover{border-color:var(--amber);}
+  button.primary{background:var(--amber); color:#201a0d; border-color:var(--amber); font-weight:600;}
+  button.primary:hover{filter:brightness(1.08);}
+  button.danger{color:var(--red); border-color:var(--red-dim);}
+  button.small{padding:4px 9px; font-size:0.75rem;}
+  button.ghost{background:transparent; border:none; color:var(--text-muted); text-decoration:underline; padding:2px 0;}
+
+  .toggle-add{margin-bottom:14px;}
+
+  .panel{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:6px;
+    padding:18px;
+    margin-bottom:28px;
+    display:none;
+  }
+  .panel.open{display:block;}
+
+  .field-row{display:flex; flex-wrap:wrap; gap:14px; margin-bottom:14px;}
+  label{display:block; font-size:0.72rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:5px;}
+  input[type="date"], input[type="number"], input[type="text"], select{
+    background:var(--bg);
+    border:1px solid var(--border);
+    color:var(--text);
+    border-radius:4px;
+    padding:8px 9px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:0.85rem;
+  }
+  input:focus, select:focus{outline:none; border-color:var(--amber);}
+
+  .chips{display:flex; flex-wrap:wrap; gap:6px;}
+  .chip{
+    border:1px solid var(--border);
+    border-radius:14px;
+    padding:5px 12px;
+    font-size:0.8rem;
+    cursor:pointer;
+    user-select:none;
+    color:var(--text-muted);
+  }
+  .chip.active{background:var(--amber-dim); border-color:var(--amber); color:var(--amber);}
+
+  .add-person{display:flex; gap:6px; margin-top:8px;}
+  .add-person input{flex:1;}
+
+  table.pay-rows{width:100%; border-collapse:collapse; margin-bottom:6px;}
+  table.pay-rows th{
+    text-align:left; font-size:0.68rem; color:var(--text-muted);
+    text-transform:uppercase; letter-spacing:0.04em; padding-bottom:6px;
+    border-bottom:1px solid var(--border);
+  }
+  table.pay-rows td{padding:6px 4px; vertical-align:middle;}
+  table.pay-rows select, table.pay-rows input{width:100%;}
+  .col-amount{width:90px;}
+  .col-cat{width:130px;}
+  .col-rm{width:30px;}
+
+  .form-actions{display:flex; justify-content:space-between; align-items:center; margin-top:10px;}
+  .form-actions .right{display:flex; gap:8px;}
+
+  .history-item{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:6px;
+    margin-bottom:8px;
+    overflow:hidden;
+  }
+  .history-head{
+    display:flex; justify-content:space-between; align-items:center;
+    padding:11px 14px; cursor:pointer;
+  }
+  .history-head .date{font-family:'IBM Plex Mono', monospace; font-weight:600;}
+  .history-head .meta{color:var(--text-muted); font-size:0.78rem;}
+  .history-head .amount{font-family:'IBM Plex Mono', monospace; color:var(--amber); font-weight:600;}
+  .history-body{display:none; padding:0 14px 14px; border-top:1px solid var(--border);}
+  .history-body.open{display:block;}
+  .history-body table{width:100%; font-size:0.85rem; border-collapse:collapse; margin:10px 0;}
+  .history-body td{padding:4px 0; font-family:'IBM Plex Mono', monospace;}
+  .history-body .row-actions{display:flex; gap:8px; margin-top:8px;}
+  .attendee-line{font-size:0.78rem; color:var(--text-muted); margin-top:4px;}
+
+  .empty{color:var(--text-muted); font-size:0.85rem; padding:14px 0;}
+  .note-bar{
+    font-size:0.72rem; color:var(--text-muted); margin-bottom:18px;
+    border-left:3px solid var(--border); padding-left:10px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div>
+      <h1>Журнал репетиций</h1>
+      <div class="subtitle">Преподаватель + точка · кто платил, кто должен</div>
+    </div>
+    <div class="stat-stub">
+      <div class="total" id="totalSpent">—</div>
+      <div class="label" id="sessionCount">занятий</div>
+    </div>
+  </header>
+
+  <div class="note-bar" id="noteBar">Данные хранятся в общей Google Таблице — их видят и могут менять все, у кого есть ссылка на эту страницу. <button class="ghost" id="refreshBtn" style="margin-left:6px;">Обновить данные</button></div>
+  <div class="note-bar" id="errorBar" style="display:none; border-left-color:var(--red); color:var(--red);"></div>
+
+  <div class="cards" id="cards"></div>
+
+  <div class="toggle-add">
+    <button class="primary" id="toggleFormBtn">+ Добавить занятие</button>
+  </div>
+
+  <div class="panel" id="panel">
+    <div class="section-title" id="panelTitle">Новое занятие</div>
+
+    <div class="field-row">
+      <div>
+        <label>Дата</label>
+        <input type="date" id="sessionDate">
+      </div>
+    </div>
+
+    <div style="margin-bottom:14px;">
+      <label>Кто был на занятии</label>
+      <div class="chips" id="attendeeChips"></div>
+      <div class="add-person">
+        <input type="text" id="newPersonInput" placeholder="Добавить участника">
+        <button class="small" id="addPersonBtn">Добавить</button>
+      </div>
+    </div>
+
+    <div>
+      <label>Платежи</label>
+      <table class="pay-rows" id="payRowsTable">
+        <thead>
+          <tr><th>Кто платил</th><th class="col-amount">Сумма</th><th class="col-cat">За что</th><th>Заметка</th><th class="col-rm"></th></tr>
+        </thead>
+        <tbody id="payRowsBody"></tbody>
+      </table>
+      <button class="small" id="addRowBtn">+ строка</button>
+    </div>
+
+    <div class="form-actions">
+      <button class="ghost" id="cancelBtn">Отмена</button>
+      <div class="right">
+        <span id="formError" style="color:var(--red); font-size:0.78rem;"></span>
+        <button class="primary" id="saveBtn">Сохранить занятие</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-title">История занятий</div>
+  <div id="history"></div>
+
+</div>
+
+<script>
+const API_URL = 'https://script.google.com/macros/s/AKfycbyAbMXrRAYEZZ8s3cy3jIa0XVYUpZFcScBtZxpAip05INWjnAoSz-6uYRnCaWwNtfU/exec';
+
+let people = [];
+let sessions = [];
+let editingId = null;
+let attendeeSelection = new Set();
+
+const $ = id => document.getElementById(id);
+
+function showError(msg){
+  const bar = $('errorBar');
+  if(msg){ bar.textContent = msg; bar.style.display = 'block'; }
+  else { bar.style.display = 'none'; }
+}
+
+async function loadData(){
+  try{
+    const res = await fetch(API_URL);
+    if(!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    people = (data.people && data.people.length) ? data.people : ['Егор','Андрей','Александр','Дмитрий','Артём'];
+    sessions = data.sessions || [];
+    showError(null);
+  }catch(e){
+    console.error(e);
+    people = people.length ? people : ['Егор','Андрей','Александр','Дмитрий','Артём'];
+    sessions = sessions.length ? sessions : [];
+    showError('Не удалось загрузить данные из таблицы: ' + (e.message || 'ошибка сети') + '. Показаны последние данные, которые получилось загрузить (если есть).');
+  }
+}
+
+async function saveSessions(){
+  const res = await fetch(API_URL, {
+    method:'POST',
+    headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body: JSON.stringify({action:'saveSessions', sessions})
+  });
+  if(!res.ok) throw new Error('HTTP ' + res.status);
+  const data = await res.json();
+  if(!data.ok) throw new Error('сервер вернул ошибку');
+}
+async function savePeople(){
+  const res = await fetch(API_URL, {
+    method:'POST',
+    headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body: JSON.stringify({action:'savePeople', people})
+  });
+  if(!res.ok) throw new Error('HTTP ' + res.status);
+  const data = await res.json();
+  if(!data.ok) throw new Error('сервер вернул ошибку');
+}
+
+function sessionTotal(s){
+  return s.payments.reduce((sum,p)=>sum+Number(p.amount||0),0);
+}
+
+function computeBalances(){
+  const balances = {};
+  people.forEach(p=>balances[p]={paid:0, share:0});
+  sessions.forEach(s=>{
+    const total = sessionTotal(s);
+    const n = s.attendees.length || 1;
+    const share = total / n;
+    s.payments.forEach(p=>{
+      if(!balances[p.person]) balances[p.person] = {paid:0, share:0};
+      balances[p.person].paid += Number(p.amount||0);
+    });
+    s.attendees.forEach(a=>{
+      if(!balances[a]) balances[a] = {paid:0, share:0};
+      balances[a].share += share;
+    });
+  });
+  return balances;
+}
+
+function fmt(n){
+  return Math.round(n*100)/100;
+}
+
+function render(){
+  const total = sessions.reduce((sum,s)=>sum+sessionTotal(s),0);
+  $('totalSpent').textContent = fmt(total).toLocaleString('ru-RU');
+  $('sessionCount').textContent = sessions.length + (sessions.length===1?' занятие':' занятий') + ' · всего потрачено';
+
+  const balances = computeBalances();
+  const cardsEl = $('cards');
+  cardsEl.innerHTML = '';
+  people.forEach(person=>{
+    const b = balances[person] || {paid:0, share:0};
+    const balance = fmt(b.paid - b.share);
+    const div = document.createElement('div');
+    div.className = 'card ' + (balance > 0.5 ? 'pos' : balance < -0.5 ? 'neg' : 'zero');
+    const statusText = balance > 0.5 ? 'ему должны' : balance < -0.5 ? 'он должен' : 'в расчёте';
+    div.innerHTML = `
+      <div class="name">${person}</div>
+      <div class="balance">${balance>0?'+':''}${balance.toLocaleString('ru-RU')}</div>
+      <div class="status">${statusText}</div>
+      <div class="detail">внёс ${fmt(b.paid).toLocaleString('ru-RU')} · доля ${fmt(b.share).toLocaleString('ru-RU')}</div>
+    `;
+    cardsEl.appendChild(div);
+  });
+
+  renderHistory();
+}
+
+function renderHistory(){
+  const histEl = $('history');
+  histEl.innerHTML = '';
+  if(sessions.length===0){
+    histEl.innerHTML = '<div class="empty">Пока нет ни одного занятия. Добавь первое выше.</div>';
+    return;
+  }
+  const sorted = [...sessions].sort((a,b)=> b.date.localeCompare(a.date));
+  sorted.forEach(s=>{
+    const total = sessionTotal(s);
+    const item = document.createElement('div');
+    item.className = 'history-item';
+    const payerSummary = s.payments.map(p=>`${p.person} — ${p.amount}`).join(', ');
+    item.innerHTML = `
+      <div class="history-head" data-id="${s.id}">
+        <div>
+          <div class="date">${formatDateHuman(s.date)}</div>
+          <div class="meta">${payerSummary}</div>
+        </div>
+        <div class="amount">${total.toLocaleString('ru-RU')}</div>
+      </div>
+      <div class="history-body" id="body-${s.id}">
+        <table>
+          ${s.payments.map(p=>`<tr><td>${p.person}</td><td>${p.amount.toLocaleString('ru-RU')}</td><td>${p.category}${p.note?(' · '+p.note):''}</td></tr>`).join('')}
+        </table>
+        <div class="attendee-line">Были: ${s.attendees.join(', ')} · доля каждого: ${fmt(total/(s.attendees.length||1)).toLocaleString('ru-RU')}</div>
+        <div class="row-actions">
+          <button class="small" data-edit="${s.id}">Редактировать</button>
+          <button class="small danger" data-del="${s.id}">Удалить</button>
+        </div>
+      </div>
+    `;
+    histEl.appendChild(item);
+  });
+
+  histEl.querySelectorAll('.history-head').forEach(h=>{
+    h.addEventListener('click', ()=>{
+      const id = h.dataset.id;
+      $('body-'+id).classList.toggle('open');
+    });
+  });
+  histEl.querySelectorAll('[data-edit]').forEach(b=>{
+    b.addEventListener('click', (e)=>{ e.stopPropagation(); openEdit(b.dataset.edit); });
+  });
+  histEl.querySelectorAll('[data-del]').forEach(b=>{
+    b.addEventListener('click', async (e)=>{
+      e.stopPropagation();
+      if(confirm('Удалить это занятие из журнала?')){
+        const backup = sessions;
+        sessions = sessions.filter(s=>s.id!==b.dataset.del);
+        try{
+          await saveSessions();
+          render();
+        }catch(err){
+          sessions = backup;
+          alert('Не удалось удалить: ' + (err.message || 'ошибка сети'));
+        }
+      }
+    });
+  });
+}
+
+function formatDateHuman(iso){
+  const d = new Date(iso+'T00:00:00');
+  return d.toLocaleDateString('ru-RU', {day:'2-digit', month:'2-digit', year:'numeric'});
+}
+
+function renderAttendeeChips(){
+  const wrap = $('attendeeChips');
+  wrap.innerHTML = '';
+  people.forEach(p=>{
+    const chip = document.createElement('div');
+    chip.className = 'chip' + (attendeeSelection.has(p) ? ' active' : '');
+    chip.textContent = p;
+    chip.addEventListener('click', ()=>{
+      if(attendeeSelection.has(p)) attendeeSelection.delete(p);
+      else attendeeSelection.add(p);
+      renderAttendeeChips();
+    });
+    wrap.appendChild(chip);
+  });
+}
+
+function personOptions(selected){
+  return people.map(p=>`<option value="${p}" ${p===selected?'selected':''}>${p}</option>`).join('');
+}
+
+function categoryOptions(selected){
+  const cats = ['Преподаватель','Точка','Другое'];
+  return cats.map(c=>`<option value="${c}" ${c===selected?'selected':''}>${c}</option>`).join('');
+}
+
+function addPayRow(payment){
+  const tbody = $('payRowsBody');
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td><select class="row-person">${personOptions(payment?payment.person:people[0])}</select></td>
+    <td class="col-amount"><input type="number" class="row-amount" value="${payment?payment.amount:''}" min="0" step="1"></td>
+    <td class="col-cat"><select class="row-cat">${categoryOptions(payment?payment.category:'Преподаватель')}</select></td>
+    <td><input type="text" class="row-note" value="${payment&&payment.note?payment.note:''}" placeholder="необязательно"></td>
+    <td class="col-rm"><button class="ghost rm-row" type="button">✕</button></td>
+  `;
+  tr.querySelector('.rm-row').addEventListener('click', ()=>tr.remove());
+  tbody.appendChild(tr);
+}
+
+function resetForm(){
+  editingId = null;
+  $('panelTitle').textContent = 'Новое занятие';
+  $('sessionDate').value = new Date().toISOString().slice(0,10);
+  attendeeSelection = new Set(people);
+  renderAttendeeChips();
+  $('payRowsBody').innerHTML = '';
+  addPayRow({person:people[0], amount:3000, category:'Преподаватель', note:''});
+  addPayRow({person:people[0], amount:1250, category:'Точка', note:''});
+  $('formError').textContent = '';
+}
+
+function openEdit(id){
+  const s = sessions.find(x=>x.id===id);
+  if(!s) return;
+  editingId = id;
+  $('panelTitle').textContent = 'Редактировать занятие';
+  $('sessionDate').value = s.date;
+  attendeeSelection = new Set(s.attendees);
+  renderAttendeeChips();
+  $('payRowsBody').innerHTML = '';
+  s.payments.forEach(p=>addPayRow(p));
+  $('panel').classList.add('open');
+  $('formError').textContent = '';
+  window.scrollTo({top: $('panel').offsetTop - 20, behavior:'smooth'});
+}
+
+async function handleSave(){
+  const date = $('sessionDate').value;
+  if(!date){ $('formError').textContent = 'Укажи дату'; return; }
+  if(attendeeSelection.size===0){ $('formError').textContent = 'Отметь хотя бы одного участника'; return; }
+
+  const rows = [...$('payRowsBody').querySelectorAll('tr')];
+  const payments = rows.map(tr=>({
+    person: tr.querySelector('.row-person').value,
+    amount: Number(tr.querySelector('.row-amount').value || 0),
+    category: tr.querySelector('.row-cat').value,
+    note: tr.querySelector('.row-note').value.trim()
+  })).filter(p=>p.amount>0);
+
+  if(payments.length===0){ $('formError').textContent = 'Добавь хотя бы один платёж'; return; }
+
+  const sessionObj = {
+    id: editingId || ('s'+Date.now()),
+    date,
+    attendees: [...attendeeSelection],
+    payments
+  };
+
+  if(editingId){
+    sessions = sessions.map(s=> s.id===editingId ? sessionObj : s);
+  }else{
+    sessions.push(sessionObj);
+  }
+
+  try{
+    await saveSessions();
+    $('panel').classList.remove('open');
+    render();
+  }catch(e){
+    console.error(e);
+    $('formError').textContent = 'Не удалось сохранить: ' + (e.message || 'попробуй ещё раз');
+  }
+}
+
+$('toggleFormBtn').addEventListener('click', ()=>{
+  const panel = $('panel');
+  if(panel.classList.contains('open')){
+    panel.classList.remove('open');
+  }else{
+    resetForm();
+    panel.classList.add('open');
+  }
+});
+$('cancelBtn').addEventListener('click', ()=> $('panel').classList.remove('open'));
+$('saveBtn').addEventListener('click', handleSave);
+$('addRowBtn').addEventListener('click', ()=> addPayRow({person:people[0], amount:'', category:'Другое', note:''}));
+$('addPersonBtn').addEventListener('click', async ()=>{
+  const input = $('newPersonInput');
+  const name = input.value.trim();
+  if(!name) return;
+  if(people.includes(name)){ input.value=''; return; }
+  const backup = [...people];
+  people.push(name);
+  attendeeSelection.add(name);
+  try{
+    await savePeople();
+    renderAttendeeChips();
+    input.value = '';
+  }catch(err){
+    people = backup;
+    attendeeSelection.delete(name);
+    alert('Не удалось добавить участника: ' + (err.message || 'ошибка сети'));
+  }
+});
+
+$('refreshBtn').addEventListener('click', async (e)=>{
+  e.preventDefault();
+  $('refreshBtn').textContent = 'Загрузка…';
+  await loadData();
+  render();
+  $('refreshBtn').textContent = 'Обновить данные';
+});
+
+(async function init(){
+  document.body.style.opacity = '0.5';
+  await loadData();
+  document.body.style.opacity = '1';
+  render();
+})();
+</script>
+</body>
+</html>
